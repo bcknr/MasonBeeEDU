@@ -28,29 +28,54 @@ app_ui = ui.page_sidebar(
     ui.sidebar(
         ui.input_selectize(
             "richness",
-            "Bee Diversity",
+            ui.h5("Bee Diversity"),
             ["high", "medium", "low"]
         ),
         ui.input_selectize(
             "ssp",
-            "Climate Change Scenario",
+            ui.h5("Climate Change Scenario"),
             ["optimistic", "pessimistic"]
         ),
+        ui.markdown(
+            """
+            An "optimistic scenario" reflects reduced greenhouse gas 
+            emissions and more equitable socioeconomic factors.
+            """
+        ),   
         ui.input_slider(
             "pesticide",
-            "Pesticide Pressure",
+            ui.h5("Pesticide Pressure"),
             0.01, 1.00, 0.25
         ),
+                ui.markdown(
+            """
+            When pesticide pressure is higher more pesticides are 
+            applied to the landscape. 
+            """
+        ), 
         ui.input_slider(
             "spring_vuln",
-            "Spring Bee Climate Vulnerability",
+            ui.h5("Spring Bee Climate Vulnerability"),
             0.01, 1.00, 0.25
         ),
+        ui.markdown(
+            """
+            Bees which are active in the spring are important for spring 
+            blooming plants. Greater vulnerability means they are more likely
+            to be negatively impacted by climate change.
+            """
+        ), 
         ui.input_slider(
             "buzz_vuln",
-            "Buzz Pollinating Bee Climate Vulnerability",
+            ui.h5("Buzz Pollinating Bee Climate Vulnerability"),
             0.01, 1.00, 0.25
         ),
+        ui.markdown(
+            """
+            Some plants must be pollinated by bees which can vibrate their 
+            light muscles and shake the pollen out of tubular floral structures.
+            """
+        ), 
     ),
     ui.layout_columns(
         ui.card(
@@ -86,8 +111,8 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.plot
     def service_plot():
         adjusted_baseServices = adjusted_services()
-        return(
-            adjusted_baseServices.plot(
+        
+        ax = adjusted_baseServices.plot(
                 column = 'adj',
                 cmap = 'BrBG',
                 edgecolor = 'black',
@@ -99,7 +124,9 @@ def server(input: Inputs, output: Outputs, session: Session):
                 vmin=0, 
                 vmax=1
                 )
-        )
+        
+        ax.set_axis_off()
+        return(ax)
 
     ####
     # @reactive.calc

@@ -2,3 +2,12 @@
 .Rhistory
 .RData
 .Ruserdata
+pollinationSim/data/CDL_2010_36.tif
+pollinationSim/data/CDL_2010_36.tif.vat.dbf
+pollinationSim/data/crops.tif
+pollinationSim/data/data.gpkg
+pollinationSim/data/env.tif
+pollinationSim/data/nys_counties.gpkg
+pollinationSim/data/pesticides_baseline.tif
+pollinationSim/data/services_baseline.tif
+pyPollination/penguins.csv
