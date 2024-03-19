@@ -7,13 +7,12 @@ from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 
 sns.set_theme(style="white")
 # df = pd.read_csv(Path(__file__).parent / "penguins.csv", na_values="NA")
-baseServices = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'baseServices')
-baseServices['adj'] = baseServices['sum']
+baseServices = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'geodata')
+baseServices['adj'] = baseServices['base']
 
-basePesticides = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'basePesticides')
-# basePesticides['kgPerArea'] = basePesticides['kgPerArea'].fillna(0.0)
+# basePesticides = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'basePesticides')
 
-cropLocations = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'cropLocations')
+# cropLocations = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'cropLocations')
 
 species = ["Apples","Blueberries","Alfalfa","Corn"]
 
@@ -29,7 +28,7 @@ app_ui = ui.page_sidebar(
         ui.input_selectize(
             "richness",
             ui.h5("Bee Diversity"),
-            ["high", "medium", "low"]
+            ["high", "low"]
         ),
         ui.input_selectize(
             "ssp",
@@ -79,17 +78,40 @@ app_ui = ui.page_sidebar(
     ),
     ui.layout_columns(
         ui.card(
-            ui.card_header("Pollination Services"),
+            ui.card_header(ui.h4("Pollination Services")),
             ui.output_plot("service_plot", width = "100%", height="800px"),
         ),
         ui.card(
-            ui.card_header("Pollination Services by Crop"),
-            ui.output_data_frame("service_curves"),
+            ui.card_header(ui.h4("Crop Growing Regions")),
+            ui.layout_column_wrap(
+                    ui.card(
+                        ui.card_header("Apple"),
+                        ui.output_plot("apple_plot", width = "100%", height="250px"),
+                    ),
+                    ui.card(
+                        ui.card_header("Blueberry"),
+                        ui.output_plot("blueberry_plot", width = "100%", height="250px"),
+                    ),
+                    ui.card(
+                        ui.card_header("Alfalfa"),
+                        ui.output_plot("alfalfa_plot", width = "100%", height="250px"),
+                    ),
+                    ui.card(
+                        ui.card_header("Corn"),
+                        ui.output_plot("corn_plot", width = "100%", height="250px"),
+                    ),
+                    width = 1 / 2,
+            ),
+            # ui.card_header("Pollination Services by Crop"),
+            # ui.output_data_frame("service_curves"),
         ),
     ),
     ui.layout_columns(
         *[make_value_box(crop) for crop in species],
     ),
+
+        
+
 )
 
 
@@ -98,13 +120,17 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.calc
     def adjusted_services():
         # Lookup parameters
-        n_spp = {"low": 0.6, "medium": 0.75, "high": 1.0}
-        climate = {"optimistic": 1, "pessimistic": 0.75}
+        n_spp = {"low": 0.75, "high": 1.0}
+        climate = {"optimistic": "ssp1", "pessimistic": "ssp5"}
 
         # Adjust base values
         adj_baseServices = baseServices.copy()
-        adj_baseServices['adj'] = adj_baseServices['sum'].mul(n_spp.get(input.richness()) * climate.get(input.ssp()))
-        adj_baseServices['adj'] = adj_baseServices['adj'].mul(1 - (basePesticides['kgPerArea'].mul(input.pesticide())))
+
+        # Richness, Climate change, and pesticide intensity
+        adj_baseServices['adj'] = adj_baseServices['base'].mul(n_spp.get(input.richness()) * 
+                                                              (1 - baseServices[climate.get(input.ssp())].mul(0.5)) *
+                                                              (1 - (baseServices['kgPerArea'].mul(input.pesticide())))
+                                                              )
 
         return adj_baseServices
 
@@ -116,7 +142,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 column = 'adj',
                 cmap = 'BrBG',
                 edgecolor = 'black',
-                figsize = (100,100),
+                figsize = (100,75),
                 legend = True,
                 legend_kwds = {"label": "Relative Pollination Services",
                                "orientation": "horizontal",
@@ -125,6 +151,54 @@ def server(input: Inputs, output: Outputs, session: Session):
                 vmax=1
                 )
         
+        ax.set_axis_off()
+        return(ax)
+    
+    @render.plot
+    def apple_plot():
+        ax = baseServices.plot(
+                column = 'apples',
+                cmap = 'Greens',
+                linewidth=0.1,
+                edgecolor = 'black',
+                legend = False
+                )
+        ax.set_axis_off()
+        return(ax)
+    
+    @render.plot
+    def blueberry_plot():
+        ax = baseServices.plot(
+                column = 'blueberries',
+                cmap = 'Greens',
+                linewidth=0.1,
+                edgecolor = 'black',
+                legend = False
+                )
+        ax.set_axis_off()
+        return(ax)
+    
+    @render.plot
+    def alfalfa_plot():
+        ax = baseServices.plot(
+                column = 'alfalfa',
+                cmap = 'Greens',
+                linewidth=0.1,
+                edgecolor = 'black',
+                legend = False
+                )
+        ax.set_axis_off()
+        return(ax)
+    
+    @render.plot
+    def corn_plot():
+        ax = baseServices.plot(
+                column = 'corn',
+                cmap = 'Greens',
+                linewidth=0.1,
+                edgecolor = 'black',
+                legend = False
+                )
         ax.set_axis_off()
         return(ax)
 
