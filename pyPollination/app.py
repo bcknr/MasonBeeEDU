@@ -1,12 +1,8 @@
 from pathlib import Path
 
 import geopandas as gpd
-import seaborn as sns
-
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 
-sns.set_theme(style="white")
-# df = pd.read_csv(Path(__file__).parent / "penguins.csv", na_values="NA")
 baseServices = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'geodata')
 baseServices['adj'] = baseServices['base']
 
@@ -100,29 +96,17 @@ app_ui = ui.page_sidebar(
         ),
     ),
 
-    # ui.layout_columns(
-    #     ui.value_box(
-    #         title = "Apples",
-    #         value = ui.output_ui("apples_count")
-    #     )
-    # ),
-
     ui.layout_columns(
         *[make_value_box(crop) for crop in species],
     ),
-
 )
 
 
 def server(input: Inputs, output: Outputs, session: Session):
+   
     # Calculate modified pollination services
-
     @reactive.calc
     def adjusted_services():
-
-        # Update reactive.value
-        # update.set(not update())
-
         # Lookup parameters
         n_spp = {"low": 0.75, "high": 1.0}
         climate = {"optimistic": "ssp1", "pessimistic": "ssp5"}
@@ -210,7 +194,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         return(ax)
 
     # Calculate mean and range of pollination
-
     @reactive.calc
     def crop_services():
         # Filter by crop, extract adjusted values
