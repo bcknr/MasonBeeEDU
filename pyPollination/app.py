@@ -10,10 +10,6 @@ sns.set_theme(style="white")
 baseServices = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'geodata')
 baseServices['adj'] = baseServices['base']
 
-# basePesticides = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'basePesticides')
-
-# cropLocations = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'cropLocations')
-
 species = ["Apples","Blueberries","Alfalfa","Corn"]
 
 
@@ -21,7 +17,6 @@ def make_value_box(crop):
     return ui.value_box(
         title=crop, value=ui.output_text(f"{crop}_count".lower()), theme="primary"
     )
-
 
 app_ui = ui.page_sidebar(
     ui.sidebar(
@@ -102,23 +97,32 @@ app_ui = ui.page_sidebar(
                     ),
                     width = 1 / 2,
             ),
-            # ui.card_header("Pollination Services by Crop"),
-            # ui.output_data_frame("service_curves"),
         ),
     ),
+
+    # ui.layout_columns(
+    #     ui.value_box(
+    #         title = "Apples",
+    #         value = ui.output_ui("apples_count")
+    #     )
+    # ),
+
     ui.layout_columns(
         *[make_value_box(crop) for crop in species],
     ),
-
-        
 
 )
 
 
 def server(input: Inputs, output: Outputs, session: Session):
-    ####
+    # Calculate modified pollination services
+
     @reactive.calc
     def adjusted_services():
+
+        # Update reactive.value
+        # update.set(not update())
+
         # Lookup parameters
         n_spp = {"low": 0.75, "high": 1.0}
         climate = {"optimistic": "ssp1", "pessimistic": "ssp5"}
@@ -134,6 +138,8 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         return adj_baseServices
 
+
+    # Plot main map
     @render.plot
     def service_plot():
         adjusted_baseServices = adjusted_services()
@@ -154,6 +160,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         ax.set_axis_off()
         return(ax)
     
+    # Plots of crop growing regions
     @render.plot
     def apple_plot():
         ax = baseServices.plot(
@@ -202,50 +209,41 @@ def server(input: Inputs, output: Outputs, session: Session):
         ax.set_axis_off()
         return(ax)
 
-    ####
-    # @reactive.calc
-    # def filtered_df() -> pd.DataFrame:
-    #     filt_df = df[df["Species"].isin(input.species())]
-    #     filt_df = filt_df.loc[filt_df["Body Mass (g)"] > input.mass()]
-    #     return filt_df
+    # Calculate mean and range of pollination
 
-    # @render.text
-    # def adelie_count():
-    #     return count_species(filtered_df(), "Adelie")
+    @reactive.calc
+    def crop_services():
+        # Filter by crop, extract adjusted values
+        adjusted_baseServices = adjusted_services()
 
-    # @render.text
-    # def chinstrap_count():
-    #     return count_species(filtered_df(), "Chinstrap")
-
-    # @render.text
-    # def gentoo_count():
-    #     return count_species(filtered_df(), "Gentoo")
-
-    # @render.plot
-    # def length_depth():
-    #     return sns.scatterplot(
-    #         data=filtered_df(),
-    #         x="Bill Length (mm)",
-    #         y="Bill Depth (mm)",
-    #         hue="Species",
-    #     )
-
-    # @render.data_frame
-    # def summary_statistics():
-    #     display_df = filtered_df()[
-    #         [
-    #             "Species",
-    #             "Island",
-    #             "Bill Length (mm)",
-    #             "Bill Depth (mm)",
-    #             "Body Mass (g)",
-    #         ]
-    #     ]
-    #     return render.DataGrid(display_df, filters=True)
-
-
-def count_species(df, species):
-    return df[df["Species"] == species].shape[0]
-
+        means = []
+        for spp in species:
+            means += [adjusted_baseServices[adjusted_baseServices[spp.lower()] == 1]["adj"].mean().round(2)]
+        return means
+    
+    @render.text
+    def apples_count():
+        # Reduce when spring bee vuln increases
+        val = crop_services()[0] - (input.spring_vuln() * crop_services()[0] / 2)
+        return f"Mean: {val.round(2)}"
+    
+    @render.text
+    def alfalfa_count():
+        # Buffer for wind
+        val = crop_services()[2] + 0.15
+        return f"Mean: {val.round(2)}"
+    
+    @render.text
+    def blueberries_count():
+        # Reduce when buzz bee vuln increases
+        val = crop_services()[1] - (input.buzz_vuln() * crop_services()[1] / 2)
+        return f"Mean: {val.round(2)}"
+    
+    @render.text
+    def corn_count():
+        # Buffer for wind
+        with reactive.isolate():
+            val = crop_services()[3] + 0.11
+        return f"Mean: {val}"
 
 app = App(app_ui, server)
