@@ -63,7 +63,7 @@ app_ui = ui.page_sidebar(
         ui.markdown(
             """
             Some plants must be pollinated by bees which can vibrate their 
-            light muscles and shake the pollen out of tubular floral structures.
+            flight muscles to shake the pollen out of tubular floral structures.
             """
         ), 
     ),
