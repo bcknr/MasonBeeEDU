@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import geopandas as gpd
+import matplotlib.pyplot as plt
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 
 baseServices = gpd.read_file(Path(__file__).parent / "data.gpkg", layer = 'geodata')
@@ -99,6 +100,18 @@ app_ui = ui.page_sidebar(
     ui.layout_columns(
         *[make_value_box(crop) for crop in species],
     ),
+
+    ui.layout_columns(
+        ui.markdown(
+                """
+                **Data Sources:**                 
+                Karger, D.N., Conrad, O., Böhner, J., Kawohl, T., Kreft, H., Soria-Auza, R.W., Zimmermann, N.E., Linder, P., Kessler, M. (2017): Climatologies at high resolution for the Earth land surface areas. Scientific Data. 4 170122. https://doi.org/10.1038/sdata.2017.122  
+                Karger D.N., Conrad, O., Böhner, J., Kawohl, T., Kreft, H., Soria-Auza, R.W., Zimmermann, N.E, Linder, H.P., Kessler, M. (2018): Data from: Climatologies at high resolution for the earth’s land surface areas. EnviDat. https://doi.org/10.16904/envidat.228.v2.1  
+                United States Department of Agriculture (USDA) National Agricultural Statistics Service (NASS), 20240131, Cropland Data Layer: USDA NASS, USDA NASS Marketing and Information Services Office, Washington, D.C. Online Links: https://croplandcros.scinet.usda.gov/  
+                US Geological Survey. (2024). Pesticide National Synthesis Project. Washington, DC. https://water.usgs.gov/nawqa/pnsp/usage/maps/
+                """
+            ),
+    ),  
 )
 
 
